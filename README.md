@@ -1,11 +1,11 @@
-# @gridsome/source-wordpress
+# gridsome-source-wordpress
 
 > WordPress source for Gridsome. This package is under development and
 API might change before v1 is released.
 
 ## Install
-- `yarn add @gridsome/source-wordpress`
-- `npm install @gridsome/source-wordpress`
+- `yarn add akosblazsik/gridsome-source-wordpress`
+- `npm install akosblazsik/gridsome-source-wordpress`
 
 ## Usage
 
@@ -13,7 +13,7 @@ API might change before v1 is released.
 module.exports = {
   plugins: [
     {
-      use: '@gridsome/source-wordpress',
+      use: 'gridsome-source-wordpress',
       options: {
         baseUrl: 'WEBSITE_URL', // required
         apiBase: 'wp-json',
