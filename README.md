@@ -4,8 +4,9 @@
 API might change before v1 is released.
 
 ## Install
-- `yarn add akosblazsik/gridsome-source-wordpress`
-- `npm install akosblazsik/gridsome-source-wordpress`
+- `yarn add akosblazsik/gridsome-source-wordpress#master`
+- `npm install akosblazsik/gridsome-source-wordpress#master`
+- `in npm package.json: "gridsome-source-wordpress": "akosblazsik/gridsome-source-wordpress#master"`
 
 ## Usage
 
@@ -18,6 +19,7 @@ module.exports = {
         baseUrl: 'WEBSITE_URL', // required
         apiBase: 'wp-json',
         typeName: 'WordPress',
+        imgPath: 'static/global/blog',
         perPage: 100,
         concurrent: 10
       }
@@ -58,7 +60,7 @@ To use REST endpoints from plugins or defined in your theme add a `customEndpoin
 
 
 ```js
-  use: '@gridsome/source-wordpress',
+  use: 'gridsome-source-wordpress',
   options: {
     ... // other source-wordpress options
     customEndpoints: [

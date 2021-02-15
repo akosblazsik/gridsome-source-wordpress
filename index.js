@@ -19,7 +19,8 @@ class WordPressSource {
       apiBase: 'wp-json',
       perPage: 100,
       concurrent: 10,
-      typeName: 'WordPress'
+      typeName: 'WordPress',
+      imgPath: "static/global/blog"
     }
   }
 
@@ -29,6 +30,10 @@ class WordPressSource {
 
     if (!options.typeName) {
       throw new Error(`Missing typeName option.`)
+    }
+
+    if (!options.imgPath) {
+      throw new Error(`Missing imgPath option.`)
     }
 
     if (options.perPage > 100 || options.perPage < 1) {
@@ -147,8 +152,8 @@ class WordPressSource {
 
         fields.author = createReference(AUTHOR_TYPE_NAME, post.author || '0')
 
-        console.log(" ")
-        console.log("post title: " + fields.title);
+        //console.log(" ")
+        //console.log("post title: " + fields.title);
 
         if (post.type !== TYPE_ATTACHEMENT) {
           console.log("post featured media: ");
@@ -190,7 +195,7 @@ class WordPressSource {
               }
             }
 
-            console.log("- file: "+media.file)
+            console.log("- file: " + media.file)
           } else {
             imageData = null
           }
@@ -351,12 +356,9 @@ class WordPressSource {
 
     if (media !== undefined && media.hasOwnProperty("sizes") === true) {
 
-      const img_path = Path.resolve(__dirname, '..', '..', '..', 'static', 'global', 'blog')
+      const img_path = Path.resolve(__dirname, '..', '..', this.options.imgPath)
       const path = Path.resolve(img_path, media.sizes[size].file)
       const writer = Fs.createWriteStream(path)
-
-      //console.log("path: " + path)
-      //console.log("source_url: " + media.sizes[size].source_url)
 
       const response = await axios({
         url: media.sizes[size].source_url,
@@ -372,7 +374,6 @@ class WordPressSource {
             console.log(err)
         }
       })
-      //console.log(" ")
 
       response.data.pipe(writer)
 
