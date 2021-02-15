@@ -147,41 +147,58 @@ class WordPressSource {
 
         fields.author = createReference(AUTHOR_TYPE_NAME, post.author || '0')
 
+        console.log(" ")
         console.log("post title: " + fields.title);
+
         if (post.type !== TYPE_ATTACHEMENT) {
+          console.log("post featured media: ");
           fields.featuredMedia = createReference(ATTACHEMENT_TYPE_NAME, post.featured_media)
-          console.log("featured media: " + fields.featuredMedia.id);
-          console.log(fields.featuredMedia);
-          //const mediaUrl = await this.getMediaUrl(fields.featuredMedia.id);
-          const media = await this.getMedia(fields.featuredMedia.id);
+
+          //console.log("featured media: " + fields.featuredMedia.id);
+
+          const mediaSize = "full"
+          const media = await this.getMedia(fields.featuredMedia.id)
 
           let imageData = {};
-          //if(media !== undefined && media.hasOwnProperty("source_url" === true)){
-            if(media !== undefined){
-          imageData = {
-              sourceUrl: media.source_url,
-              fileName: media.file,
-              image: Path.resolve("dist/wp-images", media.file),
-              altText: "media.alt"
-            
-          }
-         } else {
+
+          if (media !== undefined) {
             imageData = {
-                sourceUrl: "media.source_url",
-                fileName: "media.file",
-                image: Path.resolve("dist/wp-images", "media.file"),
-                altText: "media.alt"
-              
+              sourceUrl: media.sizes["full"].source_url,
+              altText: media.alt_text,
+              mediaDetails: {
+                width: media.width,
+                height: media.height,
+                file: media.file,
+                sizes: {
+                  full: {
+                    sourceUrl: "/global/blog/" + media.sizes["full"].file,
+                    width: media.sizes["full"].width,
+                    height: media.sizes["full"].height
+                  },
+                  medium: {
+                    sourceUrl: "/global/blog/" + media.sizes["medium"].file,
+                    width: media.sizes["medium"].width,
+                    height: media.sizes["medium"].height,
+                  },
+                  thumbnail: {
+                    sourceUrl: "/global/blog/" + media.sizes["thumbnail"].file,
+                    width: media.sizes["thumbnail"].width,
+                    height: media.sizes["thumbnail"].height,
+                  }
+
+                }
+              }
+            }
+
+            console.log("- file: "+media.file)
+          } else {
+            imageData = null
           }
-          //fields.featuredDownloadedMedia = createReference(ATTACHEMENT_TYPE_NAME, post.featured_media)
-         
-        }
-        fields.featuredMedia2 =  imageData
-        //fields.featuredMedia2 = media !== undefined ? imageData : createReference(ATTACHEMENT_TYPE_NAME, post.featured_media)
-          console.log("########## +")
-          console.log(post.featured_media)
-          console.log("##########")
-          this.downloadMedia(media);
+          fields.featuredMedia = imageData
+
+          this.downloadMedia(media, "full")
+          this.downloadMedia(media, "medium")
+          this.downloadMedia(media, "thumbnail")
         }
 
         // add references if post has any taxonomy rest bases as properties
@@ -195,10 +212,13 @@ class WordPressSource {
             fields[key] = Array.isArray(post[propName])
               ? post[propName].map(id => createReference(typeName, id))
               : createReference(typeName, post[propName])
+
+
           }
         }
 
         posts.addNode({ ...fields, id: post.id })
+
       }
     }
   }
@@ -237,7 +257,8 @@ class WordPressSource {
         console.warn(`Error: Status ${response.status} - ${config.url}`)
         return { ...response, data: fallbackData }
       } else {
-        throw new Error(`${response.status} - ${config.url}`)
+        //throw new Error(`${response.status} - ${config.url}`)
+        throw new Error(`${response.status}`)
       }
     }
 
@@ -292,55 +313,74 @@ class WordPressSource {
   async getMedia(id, size = "full") {
     const response = await this.fetch(`wp/v2/media/${id}`).catch(err => {
       // what now?
-      console.log(err);
+      switch (err.message) {
+        case "404":
+          console.log("Error: 404 - Media file not found.")
+          break;
+        default:
+          console.log(err)
+      }
+
     })
-    
+
+    const r = {}
+
     if (response !== undefined && response.hasOwnProperty("data") === true) {
-      //if(response.hasOwnProperty("status") === true) console.log("status: "+ response.status)
-      //if(response.data.hasOwnProperty("type") === true) console.log("type: "+ response.data.type)
 
       for (const media in response.data) {
-        if (media === "media_details") {
-          console.log("media source_url @id="+ id +": " + response.data[media].sizes[size].source_url);
-          return response.data[media].sizes[size]
+
+        if (media === "alt_text") {
+          r.alt_text = response.data[media]
         }
+
+        if (media === "media_details") {
+          r.sizes = response.data[media].sizes
+          r.width = response.data[media].width
+          r.height = response.data[media].height
+          r.file = response.data[media].file
+        }
+
       }
+
+      return r
     }
 
   }
 
-  async downloadMedia(media) {
+  async downloadMedia(media, size = "full") {
 
-    console.log(media);
-    if(media !== undefined && media.hasOwnProperty("file") === true){
-    //const url = 'https://unsplash.com/photos/AaEQmoufHLk/download?force=true'
-    const img_path = Path.resolve(__dirname, '..', '..', '..', TEMP_DIR)
-    //const img_path = Path.resolve(__dirname, '..', '..', '..')
-    const path = Path.resolve(img_path, media.file+".xxx")
-    
-    const writer = Fs.createWriteStream(path)
+    if (media !== undefined && media.hasOwnProperty("sizes") === true) {
 
-    console.log("path: "+path);
+      const img_path = Path.resolve(__dirname, '..', '..', '..', 'static', 'global', 'blog')
+      const path = Path.resolve(img_path, media.sizes[size].file)
+      const writer = Fs.createWriteStream(path)
 
-    //const img_url = getImageUrl()
+      //console.log("path: " + path)
+      //console.log("source_url: " + media.sizes[size].source_url)
 
-    const response = await axios({
-      url: media.source_url,
-      method: 'GET',
-      responseType: 'stream'
-    }).catch(err => {
-      // what now?
-      console.log(err);
-    })
+      const response = await axios({
+        url: media.sizes[size].source_url,
+        method: 'GET',
+        responseType: 'stream'
+      }).catch(err => {
+        // what now?
+        switch (err.message) {
+          case "404":
+            console.log("Error: 404 - Media file not found.")
+            break;
+          default:
+            console.log(err)
+        }
+      })
+      //console.log(" ")
 
+      response.data.pipe(writer)
 
-    response.data.pipe(writer)
-
-    return new Promise((resolve, reject) => {
-      writer.on('finish', resolve)
-      writer.on('error', reject)
-    })
-  }
+      return new Promise((resolve, reject) => {
+        writer.on('finish', resolve)
+        writer.on('error', reject)
+      })
+    }
   }
 
   sanitizeCustomEndpoints() {
@@ -417,7 +457,7 @@ function ensureArrayData(url, data) {
   return data
 }
 
-function mkdirSyncRecursive (absDirectory) {
+function mkdirSyncRecursive(absDirectory) {
   const paths = absDirectory.replace(/\/$/, '').split('/')
   paths.splice(0, 1)
 
