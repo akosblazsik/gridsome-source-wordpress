@@ -6,7 +6,7 @@ API might change before v1 is released.
 ## Install
 - `yarn add akosblazsik/gridsome-source-wordpress#master`
 - `npm install akosblazsik/gridsome-source-wordpress#master`
-- `npm package.json: "gridsome-source-wordpress": "github:akosblazsik/gridsome-source-wordpress#master"`
+- `npm package.json dependency: "gridsome-source-wordpress": "github:akosblazsik/gridsome-source-wordpress#master"`
 
 ## Usage
 
