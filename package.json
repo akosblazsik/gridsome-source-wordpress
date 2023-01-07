@@ -1,6 +1,6 @@
 {
   "name": "gridsome-source-wordpress",
-  "version": "0.1",
+  "version": "1.0.0",
   "description": "WordPress source for Gridsome",
   "main": "index.js",
   "repository": {
