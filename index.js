@@ -12,6 +12,9 @@ const TYPE_ATTACHEMENT = 'attachment'
 const TEMP_DIR = '.temp'
 const DOWNLOAD_DIR = 'wp-images'
 
+const random = (Math.random() + 1).toString(36).substring(7);
+
+
 class WordPressSource {
   static defaultOptions() {
     return {
@@ -145,7 +148,7 @@ class WordPressSource {
       const typeName = this.createTypeName(type)
       const posts = getCollection(typeName)
 
-      const data = await this.fetchPaged(`wp/v2/${restBase}`)
+      const data = await this.fetchPaged(`wp/v2/${restBase}?${random}`)
 
       for (const post of data) {
         const fields = this.normalizeFields(post)
